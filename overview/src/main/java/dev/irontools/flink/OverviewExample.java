@@ -27,12 +27,12 @@ public class OverviewExample {
 
     tEnv.executeSql("SELECT * FROM Orders").print();
 
-    tEnv.executeSql("""
-      SELECT category_id,
-             AVG(price) AS avg_price
-      FROM Orders
-      GROUP BY category_id
-    """).print();
+//    tEnv.executeSql("""
+//      SELECT category_id,
+//             AVG(price) AS avg_price
+//      FROM Orders
+//      GROUP BY category_id
+//    """).print();
 
      tEnv.executeSql("""
        SELECT category_id,
