@@ -5,8 +5,9 @@ import org.apache.flink.table.api.TableEnvironment;
 
 public class OverviewExample {
   public static void main(String[] args) {
+    
     EnvironmentSettings settings = EnvironmentSettings.inStreamingMode();
-    // settings.getConfiguration().setString("parallelism.default", "1");
+    settings.getConfiguration().setString("parallelism.default", "1");
     TableEnvironment tEnv = TableEnvironment.create(settings);
 
     tEnv.executeSql("""
@@ -24,7 +25,7 @@ public class OverviewExample {
       )
     """);
 
-    // tEnv.executeSql("SELECT * FROM Orders").print();
+    tEnv.executeSql("SELECT * FROM Orders").print();
 
     tEnv.executeSql("""
       SELECT category_id,
@@ -33,11 +34,11 @@ public class OverviewExample {
       GROUP BY category_id
     """).print();
 
-    // tEnv.executeSql("""
-    //   SELECT category_id,
-    //          ROUND(AVG(price), 2) AS avg_price
-    //   FROM Orders
-    //   GROUP BY category_id
-    // """).print();
+     tEnv.executeSql("""
+       SELECT category_id,
+              ROUND(AVG(price), 2) AS avg_price
+       FROM Orders
+       GROUP BY category_id
+     """).print();
   }
 }
