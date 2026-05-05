@@ -1,0 +1,500 @@
+{
+  "flinkVersion" : "2.1",
+  "nodes" : [ {
+    "id" : 1,
+    "type" : "stream-exec-table-source-scan_1",
+    "scanTableSource" : {
+      "table" : {
+        "identifier" : "`default_catalog`.`default_database`.`Orders`",
+        "resolvedTable" : {
+          "schema" : {
+            "columns" : [ {
+              "name" : "order_id",
+              "dataType" : "VARCHAR(2147483647)"
+            }, {
+              "name" : "customer_name",
+              "dataType" : "VARCHAR(2147483647)"
+            }, {
+              "name" : "category",
+              "dataType" : "VARCHAR(2147483647)"
+            }, {
+              "name" : "amount",
+              "dataType" : "DECIMAL(10, 2)"
+            }, {
+              "name" : "product_id",
+              "dataType" : "VARCHAR(2147483647)"
+            }, {
+              "name" : "product_name",
+              "dataType" : "VARCHAR(2147483647)"
+            }, {
+              "name" : "timestamp",
+              "dataType" : "BIGINT"
+            }, {
+              "name" : "event_time",
+              "kind" : "COMPUTED",
+              "expression" : {
+                "rexNode" : {
+                  "kind" : "CALL",
+                  "internalName" : "$TO_TIMESTAMP_LTZ$1",
+                  "operands" : [ {
+                    "kind" : "INPUT_REF",
+                    "inputIndex" : 6,
+                    "type" : "BIGINT"
+                  }, {
+                    "kind" : "LITERAL",
+                    "value" : 3,
+                    "type" : "INT NOT NULL"
+                  } ],
+                  "type" : "TIMESTAMP(3) WITH LOCAL TIME ZONE"
+                },
+                "serializableString" : "`TO_TIMESTAMP_LTZ`(`timestamp`, 3)"
+              }
+            } ],
+            "watermarkSpecs" : [ {
+              "rowtimeAttribute" : "event_time",
+              "expression" : {
+                "rexNode" : {
+                  "kind" : "CALL",
+                  "syntax" : "BINARY",
+                  "internalName" : "$-$1",
+                  "operands" : [ {
+                    "kind" : "INPUT_REF",
+                    "inputIndex" : 7,
+                    "type" : "TIMESTAMP(3) WITH LOCAL TIME ZONE"
+                  }, {
+                    "kind" : "LITERAL",
+                    "value" : "5000",
+                    "type" : "INTERVAL SECOND(6) NOT NULL"
+                  } ],
+                  "type" : "TIMESTAMP(3) WITH LOCAL TIME ZONE"
+                },
+                "serializableString" : "`event_time` - INTERVAL '5' SECOND"
+              }
+            } ]
+          },
+          "options" : {
+            "batchSize" : "10",
+            "connector" : "order-source",
+            "delayMillis" : "5000",
+            "totalCount" : "10000"
+          }
+        }
+      }
+    },
+    "outputType" : "ROW<`order_id` VARCHAR(2147483647), `customer_name` VARCHAR(2147483647), `category` VARCHAR(2147483647), `amount` DECIMAL(10, 2), `product_id` VARCHAR(2147483647), `product_name` VARCHAR(2147483647), `timestamp` BIGINT>",
+    "description" : "TableSourceScan(table=[[default_catalog, default_database, Orders]], fields=[order_id, customer_name, category, amount, product_id, product_name, timestamp])"
+  }, {
+    "id" : 2,
+    "type" : "stream-exec-calc_1",
+    "projection" : [ {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 2,
+      "type" : "VARCHAR(2147483647)"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 3,
+      "type" : "DECIMAL(10, 2)"
+    }, {
+      "kind" : "CALL",
+      "internalName" : "$TO_TIMESTAMP_LTZ$1",
+      "operands" : [ {
+        "kind" : "INPUT_REF",
+        "inputIndex" : 6,
+        "type" : "BIGINT"
+      }, {
+        "kind" : "LITERAL",
+        "value" : 3,
+        "type" : "INT NOT NULL"
+      } ],
+      "type" : "TIMESTAMP(3) WITH LOCAL TIME ZONE"
+    } ],
+    "condition" : {
+      "kind" : "CALL",
+      "syntax" : "BINARY",
+      "internalName" : "$>=$1",
+      "operands" : [ {
+        "kind" : "INPUT_REF",
+        "inputIndex" : 3,
+        "type" : "DECIMAL(10, 2)"
+      }, {
+        "kind" : "LITERAL",
+        "value" : 50,
+        "type" : "INT NOT NULL"
+      } ],
+      "type" : "BOOLEAN"
+    },
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`category` VARCHAR(2147483647), `amount` DECIMAL(10, 2), `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE>",
+    "description" : "Calc(select=[category, amount, TO_TIMESTAMP_LTZ(timestamp, 3) AS event_time])"
+  }, {
+    "id" : 3,
+    "type" : "stream-exec-watermark-assigner_1",
+    "watermarkExpr" : {
+      "kind" : "CALL",
+      "syntax" : "BINARY",
+      "internalName" : "$-$1",
+      "operands" : [ {
+        "kind" : "INPUT_REF",
+        "inputIndex" : 2,
+        "type" : "TIMESTAMP(3) WITH LOCAL TIME ZONE"
+      }, {
+        "kind" : "LITERAL",
+        "value" : "5000",
+        "type" : "INTERVAL SECOND(6) NOT NULL"
+      } ],
+      "type" : "TIMESTAMP(3) WITH LOCAL TIME ZONE"
+    },
+    "rowtimeFieldIndex" : 2,
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : {
+      "type" : "ROW",
+      "fields" : [ {
+        "name" : "category",
+        "fieldType" : "VARCHAR(2147483647)"
+      }, {
+        "name" : "amount",
+        "fieldType" : "DECIMAL(10, 2)"
+      }, {
+        "name" : "event_time",
+        "fieldType" : {
+          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+          "precision" : 3,
+          "kind" : "ROWTIME"
+        }
+      } ]
+    },
+    "description" : "WatermarkAssigner(rowtime=[event_time], watermark=[(event_time - 5000:INTERVAL SECOND)])"
+  }, {
+    "id" : 4,
+    "type" : "stream-exec-local-window-aggregate_1",
+    "configuration" : {
+      "table.local-time-zone" : "default"
+    },
+    "grouping" : [ 0 ],
+    "aggCalls" : [ {
+      "name" : "total_amount",
+      "internalName" : "$SUM$1",
+      "argList" : [ 1 ],
+      "filterArg" : -1,
+      "distinct" : false,
+      "approximate" : false,
+      "ignoreNulls" : false,
+      "type" : "DECIMAL(38, 2)"
+    }, {
+      "name" : "order_count",
+      "syntax" : "FUNCTION_STAR",
+      "internalName" : "$COUNT$1",
+      "argList" : [ ],
+      "filterArg" : -1,
+      "distinct" : false,
+      "approximate" : false,
+      "ignoreNulls" : false,
+      "type" : "BIGINT NOT NULL"
+    } ],
+    "windowing" : {
+      "strategy" : "TimeAttribute",
+      "window" : {
+        "type" : "TumblingWindow",
+        "size" : "PT15S"
+      },
+      "timeAttributeType" : {
+        "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+        "precision" : 3,
+        "kind" : "ROWTIME"
+      },
+      "timeAttributeIndex" : 2,
+      "isRowtime" : true
+    },
+    "needRetraction" : false,
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`category` VARCHAR(2147483647), `sum$0` DECIMAL(38, 2), `count1$1` BIGINT, `$slice_end` BIGINT>",
+    "description" : "LocalWindowAggregate(groupBy=[category], window=[TUMBLE(time_col=[event_time], size=[15 s])], select=[category, SUM(amount) AS sum$0, COUNT(*) AS count1$1, slice_end('w$) AS $slice_end])"
+  }, {
+    "id" : 5,
+    "type" : "stream-exec-exchange_1",
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "HASH",
+        "keys" : [ 0 ]
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`category` VARCHAR(2147483647), `sum$0` DECIMAL(38, 2), `count1$1` BIGINT, `$slice_end` BIGINT>",
+    "description" : "Exchange(distribution=[hash[category]])"
+  }, {
+    "id" : 6,
+    "type" : "stream-exec-global-window-aggregate_1",
+    "configuration" : {
+      "table.local-time-zone" : "default"
+    },
+    "grouping" : [ 0 ],
+    "aggCalls" : [ {
+      "name" : "total_amount",
+      "internalName" : "$SUM$1",
+      "argList" : [ 1 ],
+      "filterArg" : -1,
+      "distinct" : false,
+      "approximate" : false,
+      "ignoreNulls" : false,
+      "type" : "DECIMAL(38, 2)"
+    }, {
+      "name" : "order_count",
+      "syntax" : "FUNCTION_STAR",
+      "internalName" : "$COUNT$1",
+      "argList" : [ ],
+      "filterArg" : -1,
+      "distinct" : false,
+      "approximate" : false,
+      "ignoreNulls" : false,
+      "type" : "BIGINT NOT NULL"
+    } ],
+    "windowing" : {
+      "strategy" : "SliceAttached",
+      "window" : {
+        "type" : "TumblingWindow",
+        "size" : "PT15S"
+      },
+      "timeAttributeType" : {
+        "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+        "precision" : 3,
+        "kind" : "ROWTIME"
+      },
+      "sliceEnd" : 3,
+      "isRowtime" : true
+    },
+    "namedWindowProperties" : [ {
+      "name" : "window_start",
+      "property" : {
+        "kind" : "WindowStart",
+        "reference" : {
+          "name" : "w$",
+          "type" : {
+            "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+            "precision" : 3,
+            "kind" : "ROWTIME"
+          }
+        }
+      }
+    }, {
+      "name" : "window_end",
+      "property" : {
+        "kind" : "WindowEnd",
+        "reference" : {
+          "name" : "w$",
+          "type" : {
+            "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+            "precision" : 3,
+            "kind" : "ROWTIME"
+          }
+        }
+      }
+    } ],
+    "needRetraction" : false,
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "localAggInputRowType" : {
+      "type" : "ROW",
+      "fields" : [ {
+        "name" : "category",
+        "fieldType" : "VARCHAR(2147483647)"
+      }, {
+        "name" : "amount",
+        "fieldType" : "DECIMAL(10, 2)"
+      }, {
+        "name" : "event_time",
+        "fieldType" : {
+          "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE",
+          "precision" : 3,
+          "kind" : "ROWTIME"
+        }
+      } ]
+    },
+    "outputType" : "ROW<`category` VARCHAR(2147483647), `total_amount` DECIMAL(38, 2), `order_count` BIGINT NOT NULL, `window_start` TIMESTAMP(3) NOT NULL, `window_end` TIMESTAMP(3) NOT NULL>",
+    "description" : "GlobalWindowAggregate(groupBy=[category], window=[TUMBLE(slice_end=[$slice_end], size=[15 s])], select=[category, SUM(sum$0) AS total_amount, COUNT(count1$1) AS order_count, start('w$) AS window_start, end('w$) AS window_end])"
+  }, {
+    "id" : 7,
+    "type" : "stream-exec-calc_1",
+    "projection" : [ {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 0,
+      "type" : "VARCHAR(2147483647)"
+    }, {
+      "kind" : "CALL",
+      "syntax" : "SPECIAL",
+      "internalName" : "$CAST$1",
+      "operands" : [ {
+        "kind" : "INPUT_REF",
+        "inputIndex" : 3,
+        "type" : "TIMESTAMP(3) NOT NULL"
+      } ],
+      "type" : "TIMESTAMP(3)"
+    }, {
+      "kind" : "CALL",
+      "syntax" : "SPECIAL",
+      "internalName" : "$CAST$1",
+      "operands" : [ {
+        "kind" : "INPUT_REF",
+        "inputIndex" : 4,
+        "type" : "TIMESTAMP(3) NOT NULL"
+      } ],
+      "type" : "TIMESTAMP(3)"
+    }, {
+      "kind" : "CALL",
+      "syntax" : "SPECIAL",
+      "internalName" : "$CAST$1",
+      "operands" : [ {
+        "kind" : "INPUT_REF",
+        "inputIndex" : 1,
+        "type" : "DECIMAL(38, 2)"
+      } ],
+      "type" : "DECIMAL(10, 2)"
+    }, {
+      "kind" : "CALL",
+      "syntax" : "SPECIAL",
+      "internalName" : "$CAST$1",
+      "operands" : [ {
+        "kind" : "INPUT_REF",
+        "inputIndex" : 2,
+        "type" : "BIGINT NOT NULL"
+      } ],
+      "type" : "BIGINT"
+    } ],
+    "condition" : null,
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`category` VARCHAR(2147483647), `window_start` TIMESTAMP(3), `window_end` TIMESTAMP(3), `total_amount` DECIMAL(10, 2), `order_count` BIGINT>",
+    "description" : "Calc(select=[category, CAST(window_start AS TIMESTAMP(3)) AS window_start, CAST(window_end AS TIMESTAMP(3)) AS window_end, CAST(total_amount AS DECIMAL(10, 2)) AS total_amount, CAST(order_count AS BIGINT) AS order_count])"
+  }, {
+    "id" : 8,
+    "type" : "stream-exec-sink_1",
+    "configuration" : {
+      "table.exec.sink.keyed-shuffle" : "AUTO",
+      "table.exec.sink.not-null-enforcer" : "ERROR",
+      "table.exec.sink.rowtime-inserter" : "ENABLED",
+      "table.exec.sink.type-length-enforcer" : "IGNORE",
+      "table.exec.sink.upsert-materialize" : "AUTO"
+    },
+    "dynamicTableSink" : {
+      "table" : {
+        "identifier" : "`default_catalog`.`default_database`.`PrintSink`",
+        "resolvedTable" : {
+          "schema" : {
+            "columns" : [ {
+              "name" : "category",
+              "dataType" : "VARCHAR(2147483647) NOT NULL"
+            }, {
+              "name" : "window_start",
+              "dataType" : "TIMESTAMP(3) NOT NULL"
+            }, {
+              "name" : "window_end",
+              "dataType" : "TIMESTAMP(3)"
+            }, {
+              "name" : "total_amount",
+              "dataType" : "DECIMAL(10, 2)"
+            }, {
+              "name" : "order_count",
+              "dataType" : "BIGINT"
+            } ],
+            "primaryKey" : {
+              "name" : "PK_category_window_start",
+              "type" : "PRIMARY_KEY",
+              "columns" : [ "category", "window_start" ]
+            }
+          },
+          "options" : {
+            "connector" : "print"
+          }
+        }
+      }
+    },
+    "inputChangelogMode" : [ "INSERT" ],
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`category` VARCHAR(2147483647), `window_start` TIMESTAMP(3), `window_end` TIMESTAMP(3), `total_amount` DECIMAL(10, 2), `order_count` BIGINT>",
+    "description" : "Sink(table=[default_catalog.default_database.PrintSink], fields=[category, window_start, window_end, total_amount, order_count])"
+  } ],
+  "edges" : [ {
+    "source" : 1,
+    "target" : 2,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 2,
+    "target" : 3,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 3,
+    "target" : 4,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 4,
+    "target" : 5,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 5,
+    "target" : 6,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 6,
+    "target" : 7,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 7,
+    "target" : 8,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  } ]
+}
