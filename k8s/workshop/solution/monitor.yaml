@@ -8,7 +8,7 @@ metadata:
 spec:
   namespaceSelector:
     matchNames:
-      - flink-bootcamp
+      - default
   selector:
     matchLabels:
       app: advanced-app

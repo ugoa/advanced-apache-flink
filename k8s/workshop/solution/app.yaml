@@ -2,9 +2,9 @@ apiVersion: flink.apache.org/v1beta1
 kind: FlinkDeployment
 metadata:
   name: advanced-app
-  namespace: flink-bootcamp
+  namespace: default
 spec:
-  image: flink-jdk:2.1.0
+  image: flink:first
   flinkVersion: v2_1
   flinkConfiguration:
     taskmanager.numberOfTaskSlots: 2
@@ -65,7 +65,7 @@ spec:
       volumes:
         - name: flink-storage
           hostPath:
-            path: /Users/sap1ens/Dev/Irontools/advanced-apache-flink/k8s/storage
+            path: /tmp/k8s-storage
             type: DirectoryOrCreate
   jobManager:
     resource:
