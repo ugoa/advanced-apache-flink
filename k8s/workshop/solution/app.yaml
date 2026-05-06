@@ -6,43 +6,80 @@ metadata:
 spec:
   image: flink:first
   flinkVersion: v2_1
+  job:
+    jarURI: local:///opt/flink/examples/streaming/WindowJoin.jar
+    parallelism: 2
+    # 另外两个选项是 stateless, last-state
+    # last-state 利用 k8s 提供 HA 机制进行更新重启
+    upgradeMode: savepoint
+    # savepointTriggerNonce: 1
+  mode: native
   flinkConfiguration:
+    # 和 parallelism 搭配使用可以确定 taskmanager的数量
     taskmanager.numberOfTaskSlots: 2
+    # 降低托管内存的百分比, 对无状态作业这些内存是浪费的
     taskmanager.memory.managed.fraction: 0.2
 
+    # 检查点间隔三十秒
     execution.checkpointing.interval: "30 s"
+    # 检查点最低停顿 10秒
     execution.checkpointing.min-pause: "10 s"
+    # 检查点超时60 分钟,这个设置可以宽松一点
     execution.checkpointing.timeout: "60 min"
+    # 检查点增量更新, 降低每次 IO 的吞吐
     execution.checkpointing.incremental: "true"
+    # 设置存储检查点目录
     execution.checkpointing.dir: file:///flink-storage/checkpoints
+    # 设置存储 savepoint 的目录
     execution.checkpointing.savepoint-dir: file:///flink-storage/savepoints
 
+    # 设置状态后端为 rocksdb
     state.backend.type: rocksdb
+    # 设置rocksdb为 ssd优化
     state.backend.rocksdb.predefined-options: FLASH_SSD_OPTIMIZED
+    # 设置rocksdb并行为 4
     state.backend.rocksdb.thread.num: 4
+    # 设置rocksdb 的压缩
     state.backend.rocksdb.compression.per.level: LZ4_COMPRESSION
 
+    # 设置作业并发量, 最好是高合成数(1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 15, 20,
+    # 21, 24, 28, 30, 35, 40, 42, 56, 60, 70, 84, 105, 120, 140, 168, 210, 280, 420, 840...)
     pipeline.max-parallelism: 840
+    # 设置对象在operator 之间重用,只要 operater 不对对象 mutate
     pipeline.object-reuse: true
 
+    # 使用 k8s 提供高可用性
     high-availability.type: kubernetes
+    # 高可用性存储目录
     high-availability.storageDir: file:///flink-storage/ha
 
+    # 将不可捕捉的异常视为错误处理
     cluster.uncaught-exception-handling: FAIL
+    # 根据错误率作为重启策略
     restart-strategy.type: failure-rate
+    # 每个间隔允许的最大错误次数 5
     restart-strategy.failure-rate.max-failures-per-interval: 5
+    # ?
     client.timeout: "5 min"
+    # ?
     web.timeout: "15 min"
 
+    # ?
     rest.profiling.enabled: "true"
 
+    # 放宽 jobmanager 的 CPU 限制,可以优化作业启动/重启时间
     kubernetes.jobmanager.cpu.limit-factor: 5
 
+    # 每隔 4h 保存一个 savepoint
     kubernetes.operator.periodic.savepoint.interval: "4 h"
+    # 每个 savepoint 最长保存 24 小时
     kubernetes.operator.savepoint.history.max.age: "24 h"
+    # 最多保存 5 个 savepoint
     kubernetes.operator.savepoint.history.max.count: "5"
+    # 如果 savepoint 耗时超过 30 分钟,取消操作,不必继续等待
     kubernetes.operator.savepoint.trigger.grace-period: "30 min"
 
+    # 必须是k8s 的 native mode: k8s -> jobmanager -> task manager
     jobmanager.scheduler: adaptive
     job.autoscaler.enabled: true
     job.autoscaler.vertex.min-parallelism: 2
@@ -56,6 +93,7 @@ spec:
     job.autoscaler.scale-down.max-factor: 0.5
     job.autoscaler.catch-up.duration: 10mc
 
+    # 启用 监控
     metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
     metrics.reporter.prom.scope.variables.additional:
       app_name: advanced-app
@@ -69,6 +107,7 @@ spec:
             type: DirectoryOrCreate
   jobManager:
     resource:
+      # 可以设置多一点
       memory: "2048m" # 4g
       cpu: 1
       # ephemeralStorage: "200m"
@@ -97,9 +136,3 @@ spec:
             volumeMounts:
               - name: flink-storage
                 mountPath: /flink-storage
-  job:
-    jarURI: local:///opt/flink/examples/streaming/WindowJoin.jar
-    parallelism: 2
-    upgradeMode: savepoint
-    # savepointTriggerNonce: 1
-  mode: native
