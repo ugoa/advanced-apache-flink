@@ -8,7 +8,7 @@ public class OrderSourceTableExample {
   public static void main(String[] args) {
     EnvironmentSettings settings = EnvironmentSettings.inStreamingMode();
     TableEnvironment tEnv = TableEnvironment.create(settings);
-
+    
     tEnv.executeSql("""
       CREATE TABLE Orders (
         order_id STRING,
@@ -23,54 +23,54 @@ public class OrderSourceTableExample {
         'totalCount' = '100'
       )
       """);
-
+    
     // FOR CONNECTORS
     //
-    // tEnv.executeSql("""
-    //   CREATE TABLE FileSink (
-    //     category STRING,
-    //     total_amount DECIMAL(10, 2)
-    //   ) WITH (
-    //     'connector' = 'filesystem',
-    //     'path' = 'file:///tmp/flink/orders_output',
-    //     'format' = 'csv',
-    //     'sink.rolling-policy.rollover-interval' = '15 sec'
-    //   )
-    // """);
+    tEnv.executeSql("""
+        CREATE TABLE FileSink (
+          category STRING,
+          total_amount DECIMAL(10, 2)
+        ) WITH (
+          'connector' = 'filesystem',
+          'path' = 'file:///tmp/flink/orders_output',
+          'format' = 'csv',
+          'sink.rolling-policy.rollover-interval' = '15 sec'
+        )
+      """);
     //
     // FOR CONNECTORS
+    
+    tEnv.executeSql("""
+        CREATE TABLE PrintSink (
+          category STRING,
+          total_amount DECIMAL(10, 2)
+        ) WITH (
+          'connector' = 'print'
+        )
+      """);
 
-    // tEnv.executeSql("""
-    //   CREATE TABLE PrintSink (
-    //     category STRING,
-    //     total_amount DECIMAL(10, 2)
-    //   ) WITH (
-    //     'connector' = 'print'
-    //   )
-    // """);
-    //
-    // tEnv.executeSql("""
-    //   COMPILE PLAN 'plan.json' FOR
-    //   INSERT INTO PrintSink
-    //   SELECT
-    //     category,
-    //     ROUND(SUM(amount), 2) as total_amount
-    //   FROM Orders
-    //   WHERE amount > 100.0
-    //   GROUP BY category
-    // """);
-
+//    COMPILE PLAN 'connector-plan.json' FOR
+    tEnv.executeSql("""
+        INSERT INTO FileSink
+        SELECT
+          category,
+          ROUND(SUM(amount), 2) as total_amount
+        FROM Orders
+        WHERE amount > 100.0
+        GROUP BY category
+      """);
+    
     // tEnv.loadPlan(PlanReference.fromFile("plan.json")).execute();
-
+    
     // tEnv.executeSql("EXPLAIN SELECT * FROM Orders").print();
 
-    tEnv.executeSql("""
-      SELECT
-        category,
-        ROUND(SUM(amount), 2) as total_amount
-      FROM Orders
-      WHERE amount > 100.0
-      GROUP BY category
-      """).print();
+//    tEnv.executeSql("""
+//      SELECT
+//        category,
+//        ROUND(SUM(amount), 2) as total_amount
+//      FROM Orders
+//      WHERE amount > 100.0
+//      GROUP BY category
+//      """).print();
   }
 }

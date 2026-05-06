@@ -1,9 +1,11 @@
 package dev.irontools.flink.serde;
 
 import dev.irontools.flink.serde.json.FastJsonDeserializationSchema;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.formats.json.JsonDeserializationSchema;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -30,7 +32,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @BenchmarkMode(Mode.AverageTime)
 @State(Scope.Thread)
 public class FastJsonDeserializerPojoBenchmark {
-
+  
   public static class Customer {
     public int id;
     public String first_name;
@@ -40,50 +42,50 @@ public class FastJsonDeserializerPojoBenchmark {
     public String status;
     public long balance;
   }
-
+  
   @State(Scope.Benchmark)
   public static class JsonDeserializationState {
     public byte[] data;
-
+    
     public DeserializationSchema<Customer> deserializationSchema;
     public DeserializationSchema<Customer> fastDeserializationSchema;
-
+    
     @Setup(Level.Trial)
     public void setUp() {
       deserializationSchema = new JsonDeserializationSchema<>(Customer.class);
       fastDeserializationSchema = new FastJsonDeserializationSchema<>(Customer.class);
-
+      
       try {
         deserializationSchema.open(null);
         fastDeserializationSchema.open(null);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
-
+      
       data =
-          "{\"id\":1234538243,\"first_name\":\"John\",\"last_name\":\"Doe\",\"address\":\"123 Main St\",\"country\":\"USA\",\"status\":\"active\",\"balance\":100000000}"
-              .getBytes(StandardCharsets.UTF_8);
+        "{\"id\":1234538243,\"first_name\":\"John\",\"last_name\":\"Doe\",\"address\":\"123 Main St\",\"country\":\"USA\",\"status\":\"active\",\"balance\":100000000}"
+          .getBytes(StandardCharsets.UTF_8);
     }
   }
-
+  
   @Benchmark
   public Customer measureJsonDeserializationStandard(JsonDeserializationState scenario)
-      throws IOException {
+    throws IOException {
     return scenario.deserializationSchema.deserialize(scenario.data);
   }
-
+  
   @Benchmark
   public Customer measureFastJsonDeserializationStandard(JsonDeserializationState scenario)
-      throws IOException {
+    throws IOException {
     return scenario.fastDeserializationSchema.deserialize(scenario.data);
   }
-
+  
   public static void main(String[] args) throws RunnerException {
     Options opt = new OptionsBuilder()
-        .include(FastJsonDeserializerPojoBenchmark.class.getSimpleName())
-        // .addProfiler(JavaFlightRecorderProfiler.class)
-        .build();
-
+      .include(FastJsonDeserializerPojoBenchmark.class.getSimpleName())
+      .addProfiler(JavaFlightRecorderProfiler.class)
+      .build();
+    
     new Runner(opt).run();
   }
 }
